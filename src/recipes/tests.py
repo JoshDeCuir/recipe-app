@@ -1,46 +1,153 @@
 from django.test import TestCase
-from .models import Recipe
+from ingredients.models import Ingredient
+from recipeingredients.models import RecipeIngredient
+from recipes.models import Recipe
+from django.shortcuts import reverse
+
+# Create your tests here.
+
 
 class RecipeModelTest(TestCase):
-
-    def setUp(self):
-        # Set up some initial data for tests
-        self.recipe_easy = Recipe.objects.create(
-            name="Easy Recipe",
-            ingredients="ingredient1,ingredient2",
-            cooking_time=5
+    def test_recipe_string_representation(self):
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=30, description="Test description"
         )
-        self.recipe_medium = Recipe.objects.create(
-            name="Medium Recipe",
-            ingredients="ingredient1,ingredient2,ingredient3,ingredient4",
-            cooking_time=5
+        self.assertEqual(str(recipe), "Test Recipe")
+
+    # test for recipe difficulty (easy)
+    def test_recipe_easy_difficulty(self):
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=5, description="Test description"
         )
-        self.recipe_intermediate = Recipe.objects.create(
-            name="Intermediate Recipe",
-            ingredients="ingredient1,ingredient2",
-            cooking_time=15
+        ingredient1 = Ingredient.objects.create(name="Ingredient 1")
+        ingredient2 = Ingredient.objects.create(name="Ingredient 2")
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient1)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient2)
+
+        # force the recipe to update its difficulty level after ingredients are added
+        recipe.save()
+
+        self.assertEqual(recipe.difficulty, "Easy")
+
+    # test for recipe difficulty (medium)
+    def test_recipe_medium_difficulty(self):
+        ingredient1 = Ingredient.objects.create(name="Ingredient 1")
+        ingredient2 = Ingredient.objects.create(name="Ingredient 2")
+        ingredient3 = Ingredient.objects.create(name="Ingredient 3")
+        ingredient4 = Ingredient.objects.create(name="Ingredient 4")
+        ingredient5 = Ingredient.objects.create(name="Ingredient 5")
+
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=5, description="Test description"
         )
-        self.recipe_hard = Recipe.objects.create(
-            name="Hard Recipe",
-            ingredients="ingredient1,ingredient2,ingredient3,ingredient4",
-            cooking_time=15
+
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient1)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient2)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient3)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient4)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient5)
+
+        # force the recipe to update its difficulty level after ingredients are added
+        recipe.save()
+
+        self.assertEqual(recipe.difficulty, "Medium")
+
+    # test for recipe difficulty (intermediate)
+    def test_recipe_intermediate_difficulty(self):
+        ingredient1 = Ingredient.objects.create(name="Ingredient 1")
+        ingredient2 = Ingredient.objects.create(name="Ingredient 2")
+        ingredient3 = Ingredient.objects.create(name="Ingredient 3")
+
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=15, description="Test description"
         )
 
-    def test_easy_difficulty(self):
-        self.recipe_easy.calc_difficulty()
-        self.assertEqual(self.recipe_easy.difficulty, 'Easy')
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient1)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient2)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient3)
 
-    def test_medium_difficulty(self):
-        self.recipe_medium.calc_difficulty()
-        self.assertEqual(self.recipe_medium.difficulty, 'Medium')
+        # force the recipe to update its difficulty level after ingredients are added
+        recipe.save()
 
-    def test_intermediate_difficulty(self):
-        self.recipe_intermediate.calc_difficulty()
-        self.assertEqual(self.recipe_intermediate.difficulty, 'Intermediate')
+        self.assertEqual(recipe.difficulty, "Intermediate")
 
-    def test_hard_difficulty(self):
-        self.recipe_hard.calc_difficulty()
-        self.assertEqual(self.recipe_hard.difficulty, 'Hard')
+    # test for recipe difficulty (hard)
+    def test_recipe_hard_difficulty(self):
+        ingredient1 = Ingredient.objects.create(name="Ingredient 1")
+        ingredient2 = Ingredient.objects.create(name="Ingredient 2")
+        ingredient3 = Ingredient.objects.create(name="Ingredient 3")
+        ingredient4 = Ingredient.objects.create(name="Ingredient 4")
+        ingredient5 = Ingredient.objects.create(name="Ingredient 5")
 
-    def test_string_representation(self):
-        self.assertEqual(str(self.recipe_easy), "Easy Recipe")
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=30, description="Test description"
+        )
+
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient1)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient2)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient3)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient4)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient5)
+
+        # force the recipe to update its difficulty level after ingredients are added
+        recipe.save()
+
+        self.assertEqual(recipe.difficulty, "Hard")
+
+    # test the recipe ingredients relationship
+    def test_recipe_ingredients(self):
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=30, description="Test description"
+        )
+        ingredient1 = Ingredient.objects.create(name="Ingredient 1")
+        ingredient2 = Ingredient.objects.create(name="Ingredient 2")
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient1)
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient2)
+        self.assertEqual(recipe.ingredients.count(), 2)
+
+    # test get_absolute_url
+    def test_get_absolute_url(self):
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=30, description="Test description"
+        )
+        self.assertEqual(recipe.get_absolute_url(), "/recipes/1")
+
+    # test RecipesListView
+    def test_recipes_list_view(self):
+        response = self.client.get("/recipes/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "recipes/recipes_list.html")
+
+    # test context data in RecipesListView
+    def test_recipes_list_view_context_data(self):
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=30, description="Test description"
+        )
+        response = self.client.get("/recipes/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["recipes"]), 1)
+        self.assertEqual(response.context["recipes"][0], recipe)
+
+    # test RecipesDetailView
+    def test_recipes_detail_view(self):
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=30, description="Test description"
+        )
+        response = self.client.get("/recipes/1")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "recipes/recipes_detail.html")
+
+    # test context data in RecipesDetailView
+    def test_recipes_detail_view_context_data(self):
+        recipe = Recipe.objects.create(
+            id=1, title="Test Recipe", cooking_time=30, description="Test description"
+        )
+        response = self.client.get("/recipes/1")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["recipe"], recipe)
+
+    # test recipes_home_view
+    def test_recipes_home_view(self):
+        response = self.client.get("")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "recipes/recipes_home.html")

@@ -1,29 +1,42 @@
 from django.db import models
+from django.db.models import Count
+from recipeingredients.models import RecipeIngredient
+from ingredients.models import Ingredient
+from django.shortcuts import reverse
 
-# Create your models here.
+
 class Recipe(models.Model):
-    # class attributes
-    name = models.CharField(max_length=35)
-    ingredients = models.CharField(
-        max_length=255,
-        help_text='Enter the ingredients separated by commas'
+    title = models.CharField(max_length=50)
+    cooking_time = models.PositiveIntegerField(help_text="In minutes")
+    description = models.TextField()
+    difficulty = models.CharField(max_length=20, default="TBD")
+    ingredients = models.ManyToManyField(
+        "ingredients.Ingredient", through="recipeingredients.RecipeIngredient"
     )
-    cooking_time = models.FloatField(help_text='Enter the cooking time in minutes')
-    difficulty = models.CharField(max_length=15, blank=True, null=True)
+    pic = models.ImageField(upload_to="recipes", default="no_picture.jpeg")
 
-    # Determines recipe difficulty based on cooking time
-    def calc_difficulty(self):
-        ingredients = self.ingredients.split(',')
+    def calculate_difficulty(self):
+        from recipeingredients.models import (
+            RecipeIngredient,
+        )
 
-        if self.cooking_time < 10 and len(ingredients) < 4:
-            self.difficulty = 'Easy'
-        elif self.cooking_time < 10 and len(ingredients) >= 4:
-            self.difficulty = 'Medium'
-        elif self.cooking_time >= 10 and len(ingredients) < 4:
-            self.difficulty = 'Intermediate'
+        num_ingredients = RecipeIngredient.objects.filter(recipe=self).count()
+
+        if self.cooking_time < 10 and num_ingredients < 4:
+            return "Easy"
+        elif self.cooking_time < 10 and num_ingredients >= 4:
+            return "Medium"
+        elif self.cooking_time >= 10 and num_ingredients < 4:
+            return "Intermediate"
         else:
-            self.difficulty = 'Hard'
+            return "Hard"
 
-    # String representation
+    def save(self, *args, **kwargs):
+        self.difficulty = self.calculate_difficulty()
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.name
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("recipes:recipes_detail", kwargs={"pk": self.pk})

@@ -1,12 +1,64 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipes App Welcome</title>
-</head>
-<body>
-  <h1>Welcome to the Recipes App</h1>
-  <p>Discover and share amazing recipes!</p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recipes</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-image: url("{% static 'recipes/images/recipe-welcome.jpg' %}");
+        background-size: cover;
+        background-position: center;
+      }
+      .buttonContainer {
+        position: relative;
+        width: auto;
+        height: auto;
+      }
+      .myButton {
+        background: linear-gradient(to bottom, #4a85af 5%, #404d92 100%);
+        background-color: transparent;
+        border-radius: 1px;
+        border: 1px solid #325399;
+        display: inline-block;
+        cursor: pointer;
+        color: #ffffff;
+        font-family: "Poppins", sans-serif;
+        font-size: 20px;
+        font-weight: bold;
+        padding: 4px 4px;
+        text-decoration: none;
+        text-align: center;
+        margin-top: 200px;
+        position: sticky;
+        width: 150px;
+      }
+      .myButton:hover {
+        background-color: transparent;
+      }
+      .myButton:active {
+        position: relative;
+        top: 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="buttonContainer">
+      <ul>
+        {% for recipe in recipes %}
+        <li>
+          <a href="/recipes/{{ recipe.id }}">{{ recipe.title }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      <a href="/recipes/" class="myButton"> Go to recipes</a>
+    </div>
+  </body>
 </html>
