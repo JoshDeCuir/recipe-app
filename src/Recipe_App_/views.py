@@ -30,3 +30,15 @@ def logout_view(request):
     logout(request)
     messages.success(request, "You've successfully logged out.")
     return redirect("success")
+
+def about_view(request):
+    return render(request, "recipes/about.html")
+
+def list_view(request):
+    return render(request, "recipes/list.html")
+
+def recipes_home(request):
+    return render(request, "recipes/home.html")
+
+def create_view(request):
+    return render(request, "recipes/create.html")

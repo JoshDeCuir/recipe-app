@@ -7,17 +7,24 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import ListView, DetailView
 from .models import Recipe
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import RecipeSearchForm
+from .forms import RecipeSearchForm, CreateRecipeForm
 import pandas as pd
 from django.http import HttpResponse, JsonResponse, Http404
 import matplotlib.pyplot as plt
 from django.contrib import messages
 from django.core.paginator import Paginator
+from recipeingredients.models import RecipeIngredient
+from ingredients.models import Ingredient
+from django.shortcuts import redirect
 
 
 # Create your views here.
 def recipes_home(request):
     return render(request, "recipes/recipes_home.html")
+
+
+def about_view(request):
+    return render(request, "recipes/about.html")
 
 
 def render_chart(chart_type, data, **kwargs):
@@ -68,7 +75,7 @@ class RecipesListView(LoginRequiredMixin, ListView):
     model = Recipe
     template_name = "recipes/recipes_list.html"
     context_object_name = "recipes"
-    paginate_by = 10
+    paginate_by = 20
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -251,3 +258,54 @@ class RecipesDetailView(LoginRequiredMixin, DetailView):
     model = Recipe
     template_name = "recipes/recipes_detail.html"
     context_object_name = "recipe"
+
+
+def create_view(request):
+    create_form = CreateRecipeForm(request.POST or None, request.FILES)
+    form_error = None
+
+    if request.method == "POST":
+        if create_form.is_valid():
+            title = request.POST.get("title")
+            cooking_time = int(request.POST.get("cooking_time"))
+            description = request.POST.get("description")
+            ingredients_text = request.POST.get("ingredients")
+            pic = request.FILES.get("pic")
+
+            # Split the ingredients_text into individual ingredients
+            ingredients_list = [
+                ingredient.strip() for ingredient in ingredients_text.split(",")
+            ]
+
+            try:
+                recipe = Recipe.objects.create(
+                    title=title,
+                    cooking_time=cooking_time,
+                    description=description,
+                    pic=pic,
+                )
+
+                # Create or retrieve each Ingredient object and add it to the recipe
+                for ingredient_name in ingredients_list:
+                    ingredient = Ingredient.objects.filter(name=ingredient_name).first()
+                    if not ingredient:
+                        ingredient = Ingredient.objects.create(name=ingredient_name)
+                    recipe.ingredients.add(ingredient)
+                    messages.success(request, "New recipe added successfully!")
+                    create_form = CreateRecipeForm()  # Create a new, empty form
+                    recipe.ingredients.add(ingredient)
+
+                print("Recipe creation successful!")
+                return redirect(recipe.get_absolute_url())
+
+            except Exception as e:
+                print(f"Error!!! {e}")
+        else:
+            form_error = "Please fill in all the form fields."
+
+    context = {
+        "create_form": create_form,
+        "form_error": form_error,
+    }
+
+    return render(request, "recipes/create.html", context)
