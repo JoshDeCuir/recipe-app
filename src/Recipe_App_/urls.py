@@ -40,7 +40,7 @@ urlpatterns = [
       TemplateView.as_view(template_name="recipes/success.html"),
         name="success",
     ),
-    path("__reload__/", include("django_broswer_reload.urls", namespace="reload")),
+    path("__reload__/", include("django_browser_reload.urls", namespace="reload")),
     path("about/", about_view, name="about"),
     path("create/", create_view, name="create")
 ]
