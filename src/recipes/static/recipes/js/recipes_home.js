@@ -1,1 +1,0 @@
-console.log('recipes_home.js loaded');
